@@ -5,10 +5,13 @@ from services.utils import generate_hash
 from fastapi.responses import HTMLResponse
 import uuid
 import logging
+from services.payment_gatways.payU.service import payUPaymentGateway
+
+
 
 load_dotenv()
 logger = logging.getLogger(__name__)
-
+payUPayment = payUPaymentGateway()
 router = APIRouter(
 	prefix="/api",
 	tags=["Payment-Process"],
@@ -60,43 +63,21 @@ WEBHOOK_URL = environ.get("WEBHOOK_URL")
 
 @router.post("/pay")
 async def pay(amount: float = 1, firstname: str = "test", email: str = "test@email.com"):
-    logger.info("NAV-----> the payment function called")
-    # txnid = "txn123456789012"
+    logger.info("NAV----> the payment function called")
     txnid = str(uuid.uuid4())
     productinfo = "Test Product"
-    hashh = generate_hash(txnid, amount, productinfo, firstname, email)
-
-    html_form = f"""
-    <html>
-    <body onload="document.forms[0].submit()">
-        <form action="{PAYU_BASE_URL}/_payment" method="post">
-            <input type="hidden" name="key" value="{PAYU_KEY}" />
-            <input type="hidden" name="txnid" value="{txnid}" />
-            <input type="hidden" name="amount" value="{amount:.2f}" />
-            <input type="hidden" name="productinfo" value="{productinfo}" />
-            <input type="hidden" name="firstname" value="{firstname}" />
-            <input type="hidden" name="email" value="{email}" />
-            <input type="hidden" name="phone" value="9999999999" />
-            <input type="hidden" name="surl" value="{SUCCESS_URL}" />
-            <input type="hidden" name="furl" value="{FAILURE_URL}" />
-            <input type="hidden" name="curl" value="{WEBHOOK_URL}" />
-            <input type="hidden" name="hash" value="{hashh}" />
-            <input type="hidden" name="service_provider" value="payu_paisa" />
-        </form>
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=html_form)
+    hash = payUPayment.generate_hash(txnid, amount, productinfo, firstname, email)
+    response = payUPayment.initiate_payment(hash, txnid, amount, productinfo, firstname, email)
+    return response
 
 
 @router.post("/webhook/success")
 async def webhook_success(request: Request):
-    print("the message is success")
-    form = await request.form()
-    return {"status": "success", "details": dict(form)}
+    print("Nav----> the message is success")
+    return payUPayment.webhook_success(request)
+    
 
 @router.post("/webhook/failure")
 async def webhook_failure(request: Request):
-    print("the payment failed")
-    form = await request.form()
-    return {"status": "failure", "details": dict(form)}
+    print("Nav---->the payment failed")
+    return payUPayment.webhook_failure(request)
