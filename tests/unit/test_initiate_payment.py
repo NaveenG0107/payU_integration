@@ -6,7 +6,7 @@ client = TestClient(app)
 
 def test_pay_productinfo():
 
-    response = client.post("https://lankly-multipointed-kirstie.ngrok-free.dev/api/payy")
+    response = client.post("https://lankly-multipointed-kirstie.ngrok-free.dev/api/pay")
 
     # API should respond
     assert response.status_code == 200
