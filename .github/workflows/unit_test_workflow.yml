@@ -28,4 +28,4 @@ jobs:
 
     - name: Run test file
       run: |
-        pytest test_mycode.py  # replace with your test file name
+        pytest -v  # replace with your test file name
