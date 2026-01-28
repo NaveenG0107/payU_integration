@@ -10,7 +10,7 @@ on:
 
 jobs:
   test:
-    runs-on: windows-latest   # Windows runner
+    runs-on: windows-latest
 
     steps:
     - name: Checkout repository
@@ -21,11 +21,15 @@ jobs:
       with:
         python-version: "3.13"
 
-    - name: Install pytest
+    - name: Install Poetry
       run: |
         python -m pip install --upgrade pip
-        pip install pytest
+        pip install poetry
 
-    - name: Run test file
+    - name: Install dependencies
       run: |
-        pytest -v  # replace with your test file name
+        poetry install --no-interaction --no-ansi
+
+    - name: Run tests
+      run: |
+        poetry run pytest -v
