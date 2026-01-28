@@ -1,0 +1,31 @@
+name: Python Tests on Windows
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: windows-latest   # Windows runner
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.13"
+
+    - name: Install pytest
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest
+
+    - name: Run test file
+      run: |
+        pytest test_mycode.py  # replace with your test file name
