@@ -7,20 +7,15 @@ import uuid
 
 logger = logging.getLogger(__name__)
 
-
 # def generate_hash(data: dict) -> str:
-
 #     PAYU_KEY = environ.get("PAYU_KEY")
 #     PAYU_SALT = environ.get("PAYU_SALT")
-
 #     hash_string = (
 #         f"{PAYU_KEY}|{data['txnid']}|{data['amount']}|"
 #         f"{data['productinfo']}|{data['firstname']}|{data['email']}|"
 #         f"||||||||||{PAYU_SALT}"
 #     )
-
 #     generated_hash = hashlib.sha512(hash_string.encode()).hexdigest()
-    
 #     return generated_hash
 
 def generate_hash(data: dict):
@@ -35,12 +30,9 @@ def generate_hash(data: dict):
 
     return hashlib.sha512(hash_string.encode()).hexdigest()
 
-
 def verify_payu_hash(data: dict) -> bool:
-    
     PAYU_KEY = environ.get("PAYU_KEY")
     PAYU_SALT = environ.get("PAYU_SALT")
-
     try:
         status = data.get('status', '')
         udf5 = data.get('udf5', '')
@@ -53,29 +45,25 @@ def verify_payu_hash(data: dict) -> bool:
         productinfo = data.get('productinfo', '')
         amount = data.get('amount', '')
         txnid = data.get('txnid', '')
-        
-        # Build hash string (reverse order with UDF fields)
+
         hash_string = (
             f"{PAYU_SALT}|{status}|"
             f"||||||{udf5}|{udf4}|{udf3}|{udf2}|{udf1}|{email}|"
             f"{firstname}|{productinfo}|{amount}|{txnid}|{PAYU_KEY}"
         )
-        
         generated_hash = hashlib.sha512(hash_string.encode()).hexdigest().lower()
         received_hash = data.get('hash', '').lower()
-        
+
         logger.info(f"\n[HASH VERIFICATION]")
         logger.info(f"String: {hash_string}")
         logger.info(f"Generated: {generated_hash}")
         logger.info(f"Received:  {received_hash}")
         logger.info(f"Match: {generated_hash == received_hash}\n")
         
-        return generated_hash == received_hash
-        
+        return generated_hash == received_hash   
     except Exception as e:
         logger.info(f"[HASH VERIFICATION ERROR] {str(e)}")
         return False
-
 
 def extract_payment_details(data: dict) -> Dict[str, Any]:
     """Extract structured payment details from PayU response"""
@@ -117,7 +105,6 @@ def generate_hash_check_payment_status(command: str, var1: str) -> str:
         return hashlib.sha512(hash_string.encode("utf-8")).hexdigest()
 
 def generate_refund_hash(key, command, var1, salt):
-
     hash_string = f"{key}|{command}|{var1}|{salt}"
     return hashlib.sha512(hash_string.encode("utf-8")).hexdigest()
 
