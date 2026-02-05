@@ -17,7 +17,9 @@ router = APIRouter(
 	},
 )
 
+logger = logging.getLogger(__name__)
 
 @router.post("/webhook")
 async def webhook(request: Request):
+   logger.info("NAV----> the webhook function called")
    return {"status": "success", "details": "webhook called successfully"}
