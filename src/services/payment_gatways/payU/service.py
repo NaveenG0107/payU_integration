@@ -23,22 +23,15 @@ class payUPaymentGateway:
         self.PAYMENT_STATUS_URL = environ.get('PAYMENT_STATUS_URL')
 
     def generate_hash(self, txnid, amount, productinfo, firstname, email):
-
-        # Force 2 decimal format
         amount = f"{float(amount):.2f}"
-
-
         hash_string = (
             f"{self.PAYU_KEY}|{txnid}|{amount}|{productinfo}|"
             f"{firstname}|{email}|||||||||||{self.PAYU_SALT}"
         )
-
-        logger.info(f"NAV----> the hash string value are {hash_string}")
         hashh = hashlib.sha512(
             hash_string.encode("utf-8")
         ).hexdigest().lower()
 
-        logger.info(f"NAV----> the hashh value are {hashh}")
         return hashh
 
     # def initiate_payment(self, payment_data: dict):
@@ -390,13 +383,8 @@ class payUPaymentGateway:
             
         return HTMLResponse(content=html_content)
     
-
     async def webhook_failure(request: Request):
-
         data = await request.form()
-
-        print("PAYU FAILURE:", dict(data))
-
         html = """
         <html>
             <body>
@@ -408,12 +396,9 @@ class payUPaymentGateway:
 
         return HTMLResponse(content=html, status_code=200)
     
-
     async def check_payment_status(self, transaction_id: str) -> Optional[Dict]:
-
         command = "verify_payment"
         hash_value = generate_hash_check_payment_status(command, transaction_id)
-
         payload = {
             "key": self.PAYU_KEY,
             "command": command,
@@ -423,15 +408,12 @@ class payUPaymentGateway:
 
         try:
             async with httpx.AsyncClient(timeout=30) as client:
-
                 response = await client.post(
                     self.PAYMENT_STATUS_URL,
                     data=payload
                 )
-
                 response.raise_for_status()
                 data = response.json()
-
                 if data.get("status") == 1:
                     return {
                         "success": True,
@@ -444,7 +426,6 @@ class payUPaymentGateway:
                     "message": data.get("msg", "Unknown error"),
                     "data": data
                 }
-
         except httpx.HTTPError as e:
             return {
                 "success": False,
@@ -452,29 +433,21 @@ class payUPaymentGateway:
             }
 
     async def check_payment_by_payu_id(self, mihpayid:str ):
-
         command = "check_payment"
         merchant_key = self.PAYU_KEY
         salt = self.PAYU_SALT
-
         hash_string = f"{merchant_key}|{command}|{mihpayid}|{salt}"
         hash_value = hashlib.sha512(hash_string.encode()).hexdigest()
-
         payload = {
             "key": merchant_key,
             "command": command,
             "var1": mihpayid,
             "hash": hash_value
         }
-
         url = "https://test.payu.in/merchant/postservice?form=2"
 
         async with httpx.AsyncClient(timeout=30) as client:
             response = await client.post(url, data=payload)
-
-        print("Status Code:", response.status_code)
-        print("Raw Response:", response.text)
-
         try:
             return response.json()
         except Exception:
@@ -484,21 +457,16 @@ class payUPaymentGateway:
             }
         
     async def initiate_refund(self, transaction_id, refund_amount, refund_token=None):
-
         if not refund_token:
-            logger.info(f'NAV----> the refund_toke is {refund_token}')
             refund_token = generate_unique_refund_token()
-            logger.info(f'NAV----> the refund_token after {refund_token}')
 
         command = "cancel_refund_transaction"
-
         hash_value = generate_refund_hash(
             self.PAYU_KEY,
             command,
             transaction_id,
             self.PAYU_SALT
         )
-
         payload = {
             "key": self.PAYU_KEY,
             "command": command,
@@ -507,7 +475,6 @@ class payUPaymentGateway:
             "var3": str(refund_amount),
             "hash": hash_value
         }
-
         headers = {
             "accept": "application/json",
             "Content-Type": "application/x-www-form-urlencoded"
@@ -519,7 +486,6 @@ class payUPaymentGateway:
                 data=payload,
                 headers=headers
             )
-
         try:
             return response.json()
 
@@ -531,24 +497,19 @@ class payUPaymentGateway:
             }
 
     async def check_refund_status_reqid(self, request_id: str):
-
         command = "check_action_status"
-
         hash_value = generate_refund_hash(
             self.PAYU_KEY,
             command,
             request_id,
             self.PAYU_SALT
         )
-
         payload = {
             "key": self.PAYU_KEY,
             "command": command,
             "var1": request_id,
             "hash": hash_value
         }
-
-        logger.info(f'NAV---->the payload data {payload}')
         headers = {
             "accept": "application/json",
             "Content-Type": "application/x-www-form-urlencoded"
@@ -572,16 +533,13 @@ class payUPaymentGateway:
             }
         
     async def check_all_refunds_by_payu_id(self, payuid: str) -> Dict:
-
         command = "check_action_status"
-
         hash_value = generate_refund_hash(
             self.PAYU_KEY,
             command,
             payuid,
             self.PAYU_SALT
         )
-
         payload = {
             "key": self.PAYU_KEY,
             "command": command,
@@ -589,19 +547,16 @@ class payUPaymentGateway:
             "var2": "payuid",              # Search by PayU ID
             "hash": hash_value
         }
-
         headers = {
             "accept": "application/json",
             "Content-Type": "application/x-www-form-urlencoded"
         }
-
         async with httpx.AsyncClient(timeout=30) as client:
             response = await client.post(
                 self.PAYMENT_STATUS_URL,
                 data=payload,
                 headers=headers
             )
-
         try:
             return response.json()
 
